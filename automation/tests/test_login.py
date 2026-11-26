@@ -1,3 +1,4 @@
+import pytest
 from playwright.sync_api import Page, expect
 from automation.helpers import login, LOGIN_PATH
 
@@ -52,4 +53,16 @@ def test_login_08_logout(auth_page: Page, base_url):
 # Protected page without login redirects to login
 def test_protected_page_redirects_to_login(page: Page, base_url):
     page.goto(f"{base_url}/web/index.php/pim/viewEmployeeList")
+    expect(page).to_have_url(f"{base_url}{LOGIN_PATH}")
+
+# Data-driven: several invalid username/password combinations
+@pytest.mark.parametrize("username, password", [
+    ("Admin", "wrong123"),
+    ("wrong", "admin123"),
+    ("ADMIN", "admin@999"),
+    ("wrong", "wrong"),
+])
+def test_invalid_login_data_driven(page: Page, base_url, username, password):
+    login(page, base_url, username, password)
+    expect(page.locator(".oxd-alert-content-text")).to_have_text("Invalid credentials")
     expect(page).to_have_url(f"{base_url}{LOGIN_PATH}")
